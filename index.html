@@ -1,0 +1,97 @@
+<html>
+<head>
+<meta carset="utf-8">
+<title>binary viewer</title>
+<script type="text/javascript">
+
+var __dragOver = function(event) {
+  event.preventDefault();
+};
+
+var __drop = function(event) {
+  event.preventDefault();
+  var file = event.dataTransfer.files[0];
+  var reader = new FileReader();
+  reader.onload = function(event) {
+    __viewFile(event.target.result);
+  };
+  reader.onerror = function(e) {
+    var str = '';
+    for(var key in reader.error) {
+      str = key + '=' + reader.error[key] + '\n';
+      var dumpArea = document.getElementById('dumpArea');
+      dumpArea.value = str;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+var __viewFile = function(buffer) {
+  var array = new Uint8Array(buffer);
+
+  var figure = 0;
+  var tmp = array.length;
+  while(tmp > 0) {
+    figure++;
+    tmp = (tmp/16) | 0;
+  }
+
+  var dump = '';
+  var charDump = '';
+  for(var i = 0; i < array.length; i++) {
+    if(i%16 == 0) {
+      dump += __toString(16, i, figure);
+      dump += ' ';
+    }
+
+    dump += __toString(16, array[i], 2);
+    dump += ' ';
+
+    if(array[i] >= 0x20 && array[i] <= 0x7E)
+      charDump += String.fromCharCode(array[i]);
+    else
+      charDump += '.';
+
+    if(i%16 == 15) {
+      dump += '  ';
+      dump += charDump;
+      dump += '\n';
+      charDump = '';
+    }
+  }
+
+  var dumpArea = document.getElementById('dumpArea');
+  dumpArea.value = dump;
+};
+
+/**
+ * @param {Integer} type bin->2, oct->8, degit->10, hex->16
+ * @param {Integer} num
+ * @param {Integer} figures
+ */
+function __toString(type, num, figure) {
+
+  var base = '';
+  var prefix = '';
+  var minus = '';
+
+  if(type == 8)
+    prefix = '0';
+  else if(type == 16)
+    prefix = '0x';
+
+  for(var i = 0; i < figure; i++)
+    base += '0' ;
+
+  return prefix + (base + num.toString(type)).substr(-1 * figure);
+};
+
+window.addEventListener('drop', __drop, false);
+window.addEventListener('dragover', __dragOver, false);
+</script>
+</head>
+<body>
+<textarea id="dumpArea" readonly cols="120" rows="50">
+</textarea>
+</body>
+</html>
